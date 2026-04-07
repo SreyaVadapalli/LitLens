@@ -6,6 +6,10 @@ import fitz
 import os
 from rag.ingestion import chunk_text
 from rag.retriever import store_chunks
+from agent.nodes import summarize_paper
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="LitLens", version="1.0.0")
 
@@ -47,14 +51,16 @@ async def upload_papers(files: List[UploadFile] = File(...)):
         chunks = chunk_text(full_text, file.filename)
 
         # Store in ChromaDB
-        stored = store_chunks(chunks)
+        store_chunks(chunks)
+
+        # Summarize with Claude
+        summary = summarize_paper(file.filename)
 
         results.append({
             "filename": file.filename,
             "num_pages": num_pages,
             "num_chunks": len(chunks),
-            "stored_in_vector_db": stored,
-            "preview": full_text[:300]
+            "summary": summary
         })
 
     return {"papers": results}
