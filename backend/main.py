@@ -5,6 +5,7 @@ import uvicorn
 import fitz
 import os
 from rag.ingestion import chunk_text
+from rag.retriever import store_chunks
 
 app = FastAPI(title="LitLens", version="1.0.0")
 
@@ -45,10 +46,14 @@ async def upload_papers(files: List[UploadFile] = File(...)):
         # Chunk the text
         chunks = chunk_text(full_text, file.filename)
 
+        # Store in ChromaDB
+        stored = store_chunks(chunks)
+
         results.append({
             "filename": file.filename,
             "num_pages": num_pages,
             "num_chunks": len(chunks),
+            "stored_in_vector_db": stored,
             "preview": full_text[:300]
         })
 
