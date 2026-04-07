@@ -69,3 +69,35 @@ Return this exact JSON structure:
     text = message.content[0].text
     clean = text.replace("```json", "").replace("```", "").strip()
     return json.loads(clean)
+
+def extract_topic_and_search_pubmed(summaries: list) -> list:
+    from tools.pubmed_tool import get_pubmed_papers
+
+    # Use Claude to extract the core topic
+    summaries_text = "\n\n".join([
+        f"Paper {i+1}: {s['filename']}\n{s['summary'][:300]}"
+        for i, s in enumerate(summaries)
+    ])
+
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=100,
+        messages=[
+            {
+                "role": "user",
+                "content": f"""Based on these paper summaries, generate a 
+concise PubMed search query (max 8 words).
+Return ONLY the search query, nothing else.
+
+Summaries:
+{summaries_text}"""
+            }
+        ]
+    )
+
+    query = message.content[0].text.strip()
+    print(f"PubMed search query: {query}")
+
+    # Search PubMed via MCP
+    papers = get_pubmed_papers(query, max_results=10)
+    return papers

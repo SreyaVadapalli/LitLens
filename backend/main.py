@@ -6,7 +6,7 @@ import fitz
 import os
 from rag.ingestion import chunk_text
 from rag.retriever import store_chunks
-from agent.nodes import summarize_paper, compare_papers
+from agent.nodes import summarize_paper, compare_papers, extract_topic_and_search_pubmed
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,14 +62,18 @@ async def upload_papers(files: List[UploadFile] = File(...)):
             "summary": summary
         })
 
-    # Compare papers if more than one uploaded
+    # Compare papers if more than one
     comparison = None
     if len(summaries) > 1:
         comparison = compare_papers(summaries)
 
+    # Search PubMed via MCP
+    pubmed_papers = extract_topic_and_search_pubmed(summaries)
+
     return {
         "papers": summaries,
-        "comparison": comparison
+        "comparison": comparison,
+        "pubmed_recommendations": pubmed_papers
     }
 
 if __name__ == "__main__":
