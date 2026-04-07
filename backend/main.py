@@ -4,6 +4,7 @@ from typing import List
 import uvicorn
 import fitz
 import os
+from rag.ingestion import chunk_text
 
 app = FastAPI(title="LitLens", version="1.0.0")
 
@@ -41,9 +42,13 @@ async def upload_papers(files: List[UploadFile] = File(...)):
         # Clean up temp file
         os.remove(temp_path)
 
+        # Chunk the text
+        chunks = chunk_text(full_text, file.filename)
+
         results.append({
             "filename": file.filename,
             "num_pages": num_pages,
+            "num_chunks": len(chunks),
             "preview": full_text[:300]
         })
 
