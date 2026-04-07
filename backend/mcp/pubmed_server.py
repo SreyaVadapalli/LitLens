@@ -4,8 +4,12 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 from Bio import Entrez
+import os
+from dotenv import load_dotenv
+load_dotenv()
+Entrez.email = os.getenv("NCBI_EMAIL")
 
-Entrez.email = "vadapalli.sreya98@gmail.com"
+Entrez.email = "your@email.com"
 
 app = Server("pubmed-server")
 

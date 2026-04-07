@@ -1,7 +1,11 @@
 from Bio import Entrez
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv()
+Entrez.email = os.getenv("NCBI_EMAIL")
 
-Entrez.email = "vadapalli.sreya98@gmail.com"
+Entrez.email = "your@email.com"
 
 def get_pubmed_papers(query: str, max_results: int = 10) -> list:
     try:
