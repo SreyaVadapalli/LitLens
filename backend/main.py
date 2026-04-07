@@ -6,7 +6,7 @@ import fitz
 import os
 from rag.ingestion import chunk_text
 from rag.retriever import store_chunks
-from agent.nodes import summarize_paper
+from agent.nodes import summarize_paper, compare_papers
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,7 +27,8 @@ def root():
 
 @app.post("/upload")
 async def upload_papers(files: List[UploadFile] = File(...)):
-    results = []
+    summaries = []
+
     for file in files:
         contents = await file.read()
 
@@ -47,23 +48,29 @@ async def upload_papers(files: List[UploadFile] = File(...)):
         # Clean up temp file
         os.remove(temp_path)
 
-        # Chunk the text
+        # Chunk and store
         chunks = chunk_text(full_text, file.filename)
-
-        # Store in ChromaDB
         store_chunks(chunks)
 
         # Summarize with Claude
         summary = summarize_paper(file.filename)
 
-        results.append({
+        summaries.append({
             "filename": file.filename,
             "num_pages": num_pages,
             "num_chunks": len(chunks),
             "summary": summary
         })
 
-    return {"papers": results}
+    # Compare papers if more than one uploaded
+    comparison = None
+    if len(summaries) > 1:
+        comparison = compare_papers(summaries)
+
+    return {
+        "papers": summaries,
+        "comparison": comparison
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

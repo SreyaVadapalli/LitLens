@@ -33,3 +33,39 @@ Provide:
         ]
     )
     return message.content[0].text
+
+
+def compare_papers(summaries: list) -> dict:
+    summaries_text = "\n\n".join([
+        f"Paper {i+1}: {s['filename']}\n{s['summary']}"
+        for i, s in enumerate(summaries)
+    ])
+
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2000,
+        messages=[
+            {
+                "role": "user",
+                "content": f"""You are a biomedical research assistant.
+Compare these research papers and return ONLY a JSON object with no extra text.
+
+Papers:
+{summaries_text}
+
+Return this exact JSON structure:
+{{
+    "similarities": ["similarity 1", "similarity 2"],
+    "differences": ["difference 1", "difference 2"],
+    "evidence_levels": {{"paper_filename": "evidence level"}},
+    "research_gaps": ["gap 1", "gap 2"],
+    "consensus": "overall consensus statement"
+}}"""
+            }
+        ]
+    )
+
+    import json
+    text = message.content[0].text
+    clean = text.replace("```json", "").replace("```", "").strip()
+    return json.loads(clean)
